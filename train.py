@@ -1,6 +1,7 @@
 
 from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer,AutoTokenizer
 from datasets import load_metric,load_from_disk
+import os
 import numpy as np
 import warnings
 import argparse
@@ -28,7 +29,8 @@ if __name__ == "__main__":
     VALID_BATCH_SIZE = args.eval_batch_size
     LEARNING_RATE = float(args.learning_rate)
 
-    # Set up logging
+    os.makedirs(args.data_dir,exist_ok=True)
+    os.makedirs(args.output_dir,exist_ok=True)
 
     # load datasets
     train_dataset = load_from_disk(f'{args.data_dir}train_split')
