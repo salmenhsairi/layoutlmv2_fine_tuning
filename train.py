@@ -121,4 +121,4 @@ if __name__ == "__main__":
     print(f"***** Eval results *****")
     for key, value in sorted(eval_result.items()):
         print(f"{key} = {value}\n")
-    # trainer.save_model(args.output_dir)
+    trainer.save_model(args.output_dir)
