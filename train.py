@@ -91,7 +91,7 @@ if __name__ == "__main__":
             }
 
     args = TrainingArguments(
-        output_dir=f"{args.output_dir}/layoutlmv2-finetuned", # name of directory to store the checkpoints
+        output_dir=args.output_dir, # name of directory to store the checkpoints
         evaluation_strategy = "epoch",
         logging_strategy = "epoch",
         num_train_epochs=EPOCHS,
