@@ -91,7 +91,7 @@ if __name__ == "__main__":
             }
 
     args = TrainingArguments(
-        output_dir="layoutlmv2-finetuned", # name of directory to store the checkpoints
+        output_dir=f"{args.output_dir}/layoutlmv2-finetuned", # name of directory to store the checkpoints
         evaluation_strategy = "epoch",
         logging_strategy = "epoch",
         num_train_epochs=EPOCHS,
@@ -121,4 +121,4 @@ if __name__ == "__main__":
     print(f"***** Eval results *****")
     for key, value in sorted(eval_result.items()):
         print(f"{key} = {value}\n")
-    trainer.save_model(args.output_dir)
+    # trainer.save_model(args.output_dir)
