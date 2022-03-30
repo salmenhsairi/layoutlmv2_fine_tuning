@@ -41,8 +41,8 @@ if __name__ == "__main__":
     num_labels = len(labels)
     label2id, id2label = dict(), dict()
     for i, label in enumerate(labels):
-        label2id[label] = str(i)
-        id2label[str(i)] = label
+        label2id[label] = i
+        id2label[i] = label
 
     model = AutoModelForTokenClassification.from_pretrained('microsoft/layoutlmv2-base-uncased',
                                                                         num_labels=len(label2id))
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # Metrics
     metric = load_metric("seqeval")
-    return_entity_level_metrics = True
+    return_entity_level_metrics = False
 
     def compute_metrics(p):
         predictions, labels = p
