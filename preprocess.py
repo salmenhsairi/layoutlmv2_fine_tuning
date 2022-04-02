@@ -112,7 +112,7 @@ if __name__ == '__main__':
     filtered_train = train.copy()
     for index,row in filtered_train.iterrows():
         tags = row['ner_tags']
-        if all([tag == 33 for tag in tags]):
+        if all([tag == data_config.label2id['O'] for tag in tags]):
             untagged_images = untagged_images.append(row)
             filtered_train = filtered_train.drop(index = index)
             if filtered_train.shape[0] <= ((100-limit)/100) * train.shape[0]:
