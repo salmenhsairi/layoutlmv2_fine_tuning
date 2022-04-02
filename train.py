@@ -101,7 +101,6 @@ if __name__ == "__main__":
         logging_strategy = "epoch",
         num_train_epochs=EPOCHS,
         learning_rate = LEARNING_RATE,
-        lr_scheduler_type = 'constant',  #linear/cosine/cosine_with_restarts/polynomial/constant_with_warmup
         per_device_train_batch_size=TRAIN_BATCH_SIZE,
         per_device_eval_batch_size=VALID_BATCH_SIZE,
         metric_for_best_model = "overall_f1",
