@@ -1,8 +1,10 @@
 
+from ast import arg
 from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer,AutoTokenizer
 from datasets import load_metric,load_from_disk
 import os
 import numpy as np
+import torch
 import warnings
 import argparse
 
@@ -18,7 +20,8 @@ if __name__ == "__main__":
     parser.add_argument("--train_batch_size", type=int, default=4)
     parser.add_argument("--eval_batch_size", type=int, default=4)
     parser.add_argument("--learning_rate", type=str, default=5e-5)
-
+    parser.add_argument("--lr_scheduler_type",type=str,default="linear")
+    parser.add_argument("--warmup_ratio",type=str,default=0.0)
     # Data, model, and output directories
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--data_dir", type=str)
@@ -28,6 +31,8 @@ if __name__ == "__main__":
     TRAIN_BATCH_SIZE = args.train_batch_size
     VALID_BATCH_SIZE = args.eval_batch_size
     LEARNING_RATE = float(args.learning_rate)
+    LR_SCHEDULER_TYPE = args.lr_scheduler_type
+    WARMUP_RATIO = float(args.warmup_ratio)
 
     os.makedirs(args.data_dir,exist_ok=True)
     os.makedirs(args.output_dir,exist_ok=True)
@@ -55,7 +60,7 @@ if __name__ == "__main__":
 
     # Metrics
     metric = load_metric("seqeval")
-    return_entity_level_metrics = False
+    return_entity_level_metrics = True
 
     def compute_metrics(p):
         predictions, labels = p
@@ -99,6 +104,9 @@ if __name__ == "__main__":
         lr_scheduler_type = 'constant',  #linear/cosine/cosine_with_restarts/polynomial/constant_with_warmup
         per_device_train_batch_size=TRAIN_BATCH_SIZE,
         per_device_eval_batch_size=VALID_BATCH_SIZE,
+        metric_for_best_model = "overall_f1",
+        lr_scheduler_type = LR_SCHEDULER_TYPE,  #constant/linear/cosine/cosine_with_restarts/polynomial/constant_with_warmup
+        warmup_ratio = WARMUP_RATIO, # optional, defaults to 0.0
         # max_steps=EPOCHS*len(train_dataloader),
         # fp16=True, # we use mixed precision (less memory consumption)
         save_total_limit = 1,
@@ -121,4 +129,5 @@ if __name__ == "__main__":
     print(f"***** Eval results *****")
     for key, value in sorted(eval_result.items()):
         print(f"{key} = {value}\n")
-    trainer.save_model(args.output_dir)
+    # trainer.save_model(args.output_dir)
+    torch.save(model,args.output_dir+'.pth')
