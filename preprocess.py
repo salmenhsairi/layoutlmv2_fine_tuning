@@ -18,7 +18,7 @@ def read_text_file(file_path):
 
 def get_zip_dir_name():
     try:
-        os.chdir('./data')
+        os.chdir('./../data')
         dir_list = os.listdir()
         any_file_name = dir_list[0]
         zip_dir_name = any_file_name[:any_file_name.find('\\')]
