@@ -53,7 +53,6 @@ if __name__ == '__main__':
     OUTPUT_PATH = args.output_path
 
     os.makedirs(args.output_path,exist_ok=True)
-    os.chdir('/content/data')
     files = {}
     zip_dir_name = get_zip_dir_name()
     if zip_dir_name:
