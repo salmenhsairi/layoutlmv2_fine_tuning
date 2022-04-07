@@ -17,13 +17,20 @@ def read_text_file(file_path):
         return (f.readlines())
 
 def get_zip_dir_name():
-  os.chdir('/content/data')
-  dir_list = os.listdir()
-  any_file_name = dir_list[0]
-  zip_dir_name = any_file_name[:any_file_name.find('\\')]
-  if all(list(map(lambda x : x.startswith(zip_dir_name),dir_list))):
-    return zip_dir_name
-  return False
+    try:
+        os.chdir('./data')
+        dir_list = os.listdir()
+        any_file_name = dir_list[0]
+        zip_dir_name = any_file_name[:any_file_name.find('\\')]
+        if all(list(map(lambda x : x.startswith(zip_dir_name),dir_list))):
+            return zip_dir_name
+        return False
+    finally:
+        os.chdir('./../')
+
+def filter_out_unannotated(example):
+    tags = example['ner_tags']
+    return not all([tag == data_config.label2id['O'] for tag in tags])
 
 def preprocess_data(examples):
   images = [Image.open(path).convert("RGB") for path in examples['image_path']]
@@ -100,24 +107,7 @@ if __name__ == '__main__':
         'image_path' : image_path
     }
 
-
-    df = pd.DataFrame(dataset_dict)
-    df.id = df.id.apply(str)
-    assert df.shape[0] == len(images)
-    train, valid = train_test_split(df,test_size=TEST_SIZE,shuffle=True)
-
-    #filter out untagged images to prevent 'O' tag overfitting (UNDERSAMPLINIG)
-    limit = 25 # we do not accept to reduce the train dataset with more than 25% of it's original size 
-    untagged_images = pd.DataFrame(columns=train.columns)
-    filtered_train = train.copy()
-    for index,row in filtered_train.iterrows():
-        tags = row['ner_tags']
-        if all([tag == data_config.label2id['O'] for tag in tags]):
-            untagged_images = untagged_images.append(row)
-            filtered_train = filtered_train.drop(index = index)
-            if filtered_train.shape[0] <= ((100-limit)/100) * train.shape[0]:
-                break
-
+    #raw features 
     features = Features({
         'id': Value(dtype='string', id=None),
         'words': Sequence(feature=Value(dtype='string', id=None), length=-1, id=None),
@@ -126,8 +116,11 @@ if __name__ == '__main__':
         'image_path' : Value(dtype='string', id=None)
     })
 
-    train_dataset = Dataset.from_pandas(filtered_train,features=features)
-    valid_dataset = Dataset.from_pandas(valid,features=features)
+    full_data_set = Dataset.from_dict(dataset_dict,features=features)
+    full_data_set = full_data_set.train_test_split(test_size=TEST_SIZE) #splits are shuffled by default
+    train_dataset = full_data_set['train']
+    valid_dataset = full_data_set['test']
+    train_dataset = train_dataset.filter(filter_out_unannotated)
 
     processor = LayoutLMv2Processor.from_pretrained("microsoft/layoutlmv2-base-uncased", revision="no_ocr")
 
