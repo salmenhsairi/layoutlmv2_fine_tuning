@@ -114,7 +114,8 @@ def main():
   filtered_words = [{'id':i,'text':word['word_text'],
                     'label':word['word_tagging'],
                     'box':word['word_box'],
-                    'words':[{'box':word['word_box'],'text':word['word_text']}]} for i,word in enumerate(words)]
+                    'words':[{'box':word['word_box'],'text':word['word_text']}],
+                    'prob':word['word_prob']} for i,word in enumerate(words)]
 
   merged_taggings = []
   for i,curr_word in enumerate(filtered_words):
