@@ -76,7 +76,10 @@ def main():
   model.eval()
   with torch.no_grad():
     inference_outputs = model(**encoding)
-  inference_outputs.logits.shape
+
+  output_probs = inference_outputs.logits.softmax(-1).tolist()
+  get_most_prob = lambda l : {model.config.id2label[entity]:l[entity] for entity in [l.index(p) for p in sorted(l,reverse=True)[:5]]}
+  entity_prob_output = [get_most_prob(output_probs[0][i]) for i in range(len(output_probs[0]))]
 
   raw_input_ids = encoding['input_ids'][0].tolist()
   predictions = inference_outputs.logits.argmax(-1).squeeze().tolist()
@@ -86,31 +89,33 @@ def main():
   input_ids = [id for id in raw_input_ids if id not in special_tokens]
   predictions = [model.config.id2label[prediction] for i,prediction in enumerate(predictions) if not (raw_input_ids[i] in special_tokens)]
   actual_boxes = [box for i,box in enumerate(token_boxes) if not (raw_input_ids[i] in special_tokens )]
+  actual_probs = [prob for i,prob in enumerate(entity_prob_output) if not (raw_input_ids[i] in special_tokens)]
 
   assert(len(actual_boxes) == len(predictions))
 
   for word in words:
-    word_labels = [] 
-    token_labels = []
-    word_tagging = None 
+    word_labels = [] # regarding word's subwords
+    word_probs = []
+    word_tagging = None
+    word_prob = None
     for i,box in enumerate(actual_boxes,start=0):
       if compare_boxes(word['normalized_box'],box):
         if predictions[i] != 'O':
           word_labels.append(predictions[i][2:])
         else:
-          word_labels.append('O')
-        token_labels.append(predictions[i])
+          word_labels.append('Other')
+        word_probs.append(actual_probs[i])
     if word_labels != []:
-      word_tagging =  word_labels[0] if word_labels[0] != 'O' else word_labels[-1]
+      word_tagging,word_prob =  (word_labels[0],word_probs[0]) if word_labels[0] != 'Other' else (word_labels[-1],word_probs[-1])
     else:
-      word_tagging = 'O'
-    word['word_labels'] = token_labels
+      word_tagging,word_prob = 'Other',word_probs[0]
     word['word_tagging'] = word_tagging
+    word['word_prob'] = word_prob
 
   filtered_words = [{'id':i,'text':word['word_text'],
                     'label':word['word_tagging'],
                     'box':word['word_box'],
-                    'words':[{'box':word['word_box'],'text':word['word_text']}]} for i,word in enumerate(words) if word['word_tagging'] != 'O']
+                    'words':[{'box':word['word_box'],'text':word['word_text']}]} for i,word in enumerate(words)]
 
   merged_taggings = []
   for i,curr_word in enumerate(filtered_words):
@@ -150,13 +155,15 @@ def main():
   inference_image = Image.open(imag_path).convert('RGB')
   draw = ImageDraw.Draw(inference_image)
   font = ImageFont.load_default()
-  taggings = {}
+
   for prediction, box in zip(predictions, actual_boxes):
       # predicted_label = iob_to_label(prediction).lower()
-      draw.rectangle(box, outline=label2color[prediction])
-      draw.text((box[0] + 10, box[1] - 10), text=prediction, fill=label2color[prediction], font=font)  
+      draw.rectangle(box, outline=label2color[prediction],width=3)
+      draw.text((box[0] + 12, box[1] - 12), text=prediction, fill=label2color[prediction], font=font,width=5)  
 
   doc_name = os.path.basename(imag_path)
+  doc_name = os.path.splitext(doc_name)[0]
+  
   output_path = sys.argv[3]
   os.makedirs(output_path,exist_ok=True)
   inference_image.save(f"{output_path}/imageOutput.png")
