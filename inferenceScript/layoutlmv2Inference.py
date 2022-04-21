@@ -86,7 +86,6 @@ def main():
   token_boxes = encoding.bbox.squeeze().tolist()
   special_tokens = [inference_processor.tokenizer.cls_token_id, inference_processor.tokenizer.sep_token_id, inference_processor.tokenizer.pad_token_id]
 
-  input_ids = [id for id in raw_input_ids if id not in special_tokens]
   predictions = [model.config.id2label[prediction] for i,prediction in enumerate(predictions) if not (raw_input_ids[i] in special_tokens)]
   actual_boxes = [box for i,box in enumerate(token_boxes) if not (raw_input_ids[i] in special_tokens )]
   actual_probs = [prob for i,prob in enumerate(entity_prob_output) if not (raw_input_ids[i] in special_tokens)]
@@ -142,7 +141,7 @@ def main():
       new_word['box'] = merging_box
       new_word['label'] = merged_tagging[0]['label']
       new_word['id'] = filtered_words[-1]['id']+i+1
-      new_word['words'] = [{'box':word['box'],'text':word['text']} for word in merged_tagging]
+      new_word['words'] = [{'id':word['id'],'box':word['box'],'text':word['text']} for word in merged_tagging]
       merged_words.append(new_word)
 
   filtered_words.extend(merged_words)
