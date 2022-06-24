@@ -60,14 +60,18 @@ if __name__ == '__main__':
         files['train_image'] = read_text_file(os.path.join(os.curdir,'data',f'{zip_dir_name}\\{zip_dir_name}_image.txt'))
         files['train'] = read_text_file(os.path.join(os.curdir,'data',f'{zip_dir_name}\\{zip_dir_name}.txt'))
     else:
-        for f in os.listdir():
-            if f.endswith('.txt') and f.find('box') != -1:
-                files['train_box'] = read_text_file(os.path.join(os.curdir,f))
-            elif f.endswith('.txt') and f.find('image') != -1:
-                files['train_image'] = read_text_file(os.path.join(os.curdir,f))
-            elif f.endswith('.txt') and f.find('labels') == -1:
-                files['train'] = read_text_file(os.path.join(os.curdir,f))
-
+        try :
+          os.chdir('./data')
+          for f in os.listdir():
+              if f.endswith('.txt') and f.find('box') != -1:
+                  files['train_box'] = read_text_file(os.path.join(os.curdir,f))
+              elif f.endswith('.txt') and f.find('image') != -1:
+                  files['train_image'] = read_text_file(os.path.join(os.curdir,f))
+              elif f.endswith('.txt') and f.find('labels') == -1:
+                  files['train'] = read_text_file(os.path.join(os.curdir,f))
+        finally:
+          os.chdir('./../')
+          
     assert(len(files['train']) == len(files['train_box']))
     assert(len(files['train_box']) == len(files['train_image']))
     assert(len(files['train_image']) == len(files['train']))
@@ -84,9 +88,9 @@ if __name__ == '__main__':
         ner_tags.append([row.split('\t')[1].replace('\n','') for row in files['train'][rows[0]:rows[-1]+1]])
         bboxes.append([box.split('\t')[1].replace('\n','') for box in files['train_box'][rows[0]:rows[-1]+1]])
         if zip_dir_name:
-            image_path.append(f"/content/data/{zip_dir_name}\\{image}")
+            image_path.append(f"./data/{zip_dir_name}\\{image}")
         else:
-            image_path.append(f"/content/data/{image}")
+            image_path.append(f"./data/{image}")
 
     labels = list(set([tag for doc_tag in ner_tags for tag in doc_tag]))  
     id2label = {v: k for v, k in enumerate(labels)}
@@ -125,13 +129,13 @@ if __name__ == '__main__':
 
     # we need to define custom features
     features = Features({
-        'image': Array3D(dtype="int64", shape=(3, 224, 224)),
-        'input_ids': Sequence(feature=Value(dtype='int64')),
-        'attention_mask': Sequence(Value(dtype='int64')),
-        'token_type_ids': Sequence(Value(dtype='int64')),
-        'bbox': Array2D(dtype="int64", shape=(512, 4)),
-        'labels': Sequence(ClassLabel(names=data_config.labels)),
-    })
+    'image': Array3D(dtype="int32", shape=(3, 224, 224)),
+    'input_ids': Sequence(feature=Value(dtype='int32')),
+    'attention_mask': Sequence(Value(dtype='int8')),
+    'token_type_ids': Sequence(Value(dtype='int32')),
+    'bbox': Array2D(dtype="int32", shape=(512, 4)),
+    'labels': Sequence(ClassLabel(names=data_config.labels)),
+})
 
 
     train_dataset = train_dataset.map(preprocess_data, batched=True, remove_columns=train_dataset.column_names,
